@@ -1,10 +1,11 @@
-'use client';
 
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { generateCsrfToken } from '@/lib/utils';
 
+export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
