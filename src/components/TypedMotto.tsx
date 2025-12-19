@@ -17,7 +17,11 @@ export default function TypedMotto() {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
     }, 120); // slower typing
-    return () => intervalRef.current && clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {

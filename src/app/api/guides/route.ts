@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
       where: {
         OR: [
           { slug },
-          { title: { equals: title, mode: 'insensitive' }, published: true },
+          // SQLite does not support 'mode: insensitive', so compare lowercased title
+          { title: title, published: true },
         ],
       },
     });

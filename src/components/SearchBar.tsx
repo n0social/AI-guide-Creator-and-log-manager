@@ -16,12 +16,12 @@ export default function SearchBar({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
-  const [query, setQuery] = useState(searchParams.get('q') || '')
+  const [query, setQuery] = useState((searchParams?.get('q')) || '')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(() => {
-      const params = new URLSearchParams(searchParams)
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : '')
       if (query) {
         params.set('q', query)
       } else {

@@ -3,6 +3,8 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 
+type CredentialsType = Record<"email" | "password", string> & { csrfToken?: string };
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -11,15 +13,19 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials?: CredentialsType, req?) {
         try {
+          if (!credentials) {
+            console.error('Authorize Function: No credentials provided');
+            return null;
+          }
           console.log('Authorize Function: Received credentials', credentials);
           // CSRF protection: require valid CSRF token (double submit cookie pattern)
           const csrfToken = credentials?.csrfToken;
           let csrfCookieValue = null;
           if (typeof req !== 'undefined' && req.headers) {
             const cookieHeader = req.headers.cookie || '';
-            const csrfCookie = cookieHeader.split(';').find(c => c.trim().startsWith('csrfToken='));
+            const csrfCookie = cookieHeader.split(';').find((c: string) => c.trim().startsWith('csrfToken='));
             csrfCookieValue = csrfCookie ? csrfCookie.split('=')[1] : null;
           } else if (typeof window !== 'undefined') {
             // fallback for client-side (should not happen in authorize)

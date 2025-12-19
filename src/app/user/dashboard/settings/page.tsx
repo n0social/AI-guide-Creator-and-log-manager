@@ -21,14 +21,14 @@ export default async function SettingsDashboardPage() {
       <div className="mb-6">
         <div className="font-semibold">Subscription Level:</div>
         <div className="text-lg">
-          {subscription?.status === 'active'
-            ? `${subscription.plan} (Active)`
+          {subscription
+            ? `${subscription.tier} (Active)`
             : 'No active subscription'}
         </div>
       </div>
       <div>
         {/* Placeholder for purchase/upgrade logic */}
-        <a href="/account/subscriptions" className="btn-primary">{subscription?.status === 'active' ? 'Manage Subscription' : 'Purchase Subscription'}</a>
+        <a href="/account/subscriptions" className="btn-primary">{subscription ? 'Manage Subscription' : 'Purchase Subscription'}</a>
       </div>
     </div>
   );

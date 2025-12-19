@@ -5,19 +5,26 @@ import { MarkdownEditor } from '@/components';
 import { slugify } from '@/lib/utils';
 import { Sparkles, Wand2 } from 'lucide-react';
 
-const GenerateNowPage = () => {
-  const [topic, setTopic] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState(null);
-  const [error, setError] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
+
+interface GeneratedContent {
+  title: string;
+  excerpt: string;
+  content: string;
+}
+
+const GenerateNowPage: React.FC = () => {
+  const [topic, setTopic] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [error, setError] = useState<string>('');
+  const [isPaid, setIsPaid] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     excerpt: '',
     content: '',
   });
-  const [autoSlug, setAutoSlug] = useState(true);
+  const [autoSlug, setAutoSlug] = useState<boolean>(true);
 
   useEffect(() => {
     if (autoSlug && formData.title) {
@@ -30,13 +37,15 @@ const GenerateNowPage = () => {
     setIsPaid(true); // Simulate payment success for now
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     alert('Content generated successfully!');
     setIsPaid(false); // Relock the form after submission
   };
 
-  const handleGenerate = async (e) => {
+
+  const handleGenerate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isPaid) {
       setError('Please complete the payment first.');
@@ -59,9 +68,9 @@ const GenerateNowPage = () => {
       }
 
       const data = await res.json();
-      setGeneratedContent(data);
-    } catch (err) {
-      setError(err.message);
+      setGeneratedContent(data as GeneratedContent);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -172,7 +181,7 @@ const GenerateNowPage = () => {
       <div className="mt-8">
         <h2 className="text-2xl font-bold mb-2">How to Use</h2>
         <ol className="list-decimal pl-6">
-          <li>Click the "Pay $0.99 to Generate" button.</li>
+          <li>Click the &quot;Pay $0.99 to Generate&quot; button.</li>
           <li>Complete the payment via Stripe.</li>
           <li>After payment, the form will unlock.</li>
           <li>Fill in the details and generate your blog post or article.</li>

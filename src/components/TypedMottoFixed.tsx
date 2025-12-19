@@ -17,7 +17,11 @@ export default function TypedMottoFixed() {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
     }, 120);
-    return () => intervalRef.current && clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {

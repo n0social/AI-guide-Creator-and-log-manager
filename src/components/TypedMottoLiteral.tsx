@@ -1,13 +1,13 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 
 export default function TypedMottoLiteral() {
   const [displayed, setDisplayed] = useState("");
   const [showCursor, setShowCursor] = useState(true);
   // Use a literal array of characters to avoid any string encoding or mutation issues
-  const mottoArr = [
+  const mottoArr = useMemo(() => [
     'Y','o','u','r',' ','C','o','n','t','e','n','t','.','.','.',' ','S','t','r','e','a','m','l','i','n','e','d','.'
-  ];
+  ], []);
   const iRef = useRef(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -23,8 +23,12 @@ export default function TypedMottoLiteral() {
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
     }, 120);
-    return () => intervalRef.current && clearInterval(intervalRef.current);
-  }, []);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [mottoArr]);
 
   useEffect(() => {
     if (displayed.length === mottoArr.length) {

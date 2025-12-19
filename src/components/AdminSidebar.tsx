@@ -56,7 +56,7 @@ export default function AdminSidebar() {
           <nav className="p-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href || 
-                (item.href !== '/admin' && pathname.startsWith(item.href))
+                (item.href !== '/admin' && (pathname ?? '').startsWith(item.href))
               return (
                 <Link
                   key={item.name}
@@ -107,7 +107,7 @@ export default function AdminSidebar() {
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navigation.map((item) => {
               const isActive = pathname === item.href || 
-                (item.href !== '/admin' && pathname.startsWith(item.href))
+                (item.href !== '/admin' && (pathname ?? '').startsWith(item.href))
               return (
                 <Link
                   key={item.name}

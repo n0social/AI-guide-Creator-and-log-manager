@@ -1,6 +1,8 @@
+
 import Link from 'next/link'
 import { Clock, ArrowRight, Eye } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
+import Image from 'next/image';
 
 interface GuideCardProps {
   title: string
@@ -50,10 +52,14 @@ export default function GuideCard({
         {typeof coverImage === 'string' &&
           coverImage.trim() !== '' &&
           (coverImage.startsWith('http://') || coverImage.startsWith('https://')) ? (
-          <img
+          <Image
             src={coverImage}
             alt={title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            style={{ objectFit: 'cover' }}
+            sizes="100vw"
+            priority={featured}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -77,20 +83,10 @@ export default function GuideCard({
           <time dateTime={new Date(createdAt).toISOString()}>
             {formatDate(createdAt)}
           </time>
-          <span className="flex items-center gap-1">
-                <Image
-                  src={coverImage}
-                  alt={title}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  style={{ objectFit: 'cover' }}
-                  sizes="100vw"
-                  priority={featured}
-                />
+            <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
               {views}
             </span>
-          )}
         </div>
 
         <h3

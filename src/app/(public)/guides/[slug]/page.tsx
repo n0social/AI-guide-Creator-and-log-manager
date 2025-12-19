@@ -4,6 +4,7 @@ import { Clock, Calendar, ArrowLeft, Eye, User } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import { MarkdownRenderer, GuideCard } from '@/components'
+import Image from 'next/image';
 
 interface GuidePageProps {
   params: { slug: string }
@@ -101,11 +102,15 @@ export default async function GuidePage({ params }: GuidePageProps) {
       {/* Content */}
       <article className="mx-auto max-w-4xl px-6 py-12 lg:px-8">
         {guide.coverImage && (
-          <div className="mb-12 overflow-hidden rounded-2xl">
-            <img
+          <div className="mb-12 overflow-hidden rounded-2xl relative w-full h-64">
+            <Image
               src={guide.coverImage}
               alt={guide.title}
-              className="w-full object-cover"
+              fill
+              className="object-cover rounded-2xl"
+              style={{ objectFit: 'cover' }}
+              sizes="100vw"
+              priority={true}
             />
           </div>
         )}
