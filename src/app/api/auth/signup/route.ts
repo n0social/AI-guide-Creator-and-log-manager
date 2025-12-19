@@ -1,6 +1,5 @@
 
 import { NextResponse } from 'next/server';
-import type { Request } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -11,7 +10,7 @@ export async function POST(req: Request) {
 
     // CSRF protection: require valid CSRF token (double submit cookie pattern)
     // The client should send a CSRF token in both a cookie and the request body/header
-    const csrfCookie = req.headers.get('cookie')?.split(';').find(c => c.trim().startsWith('csrfToken='));
+    const csrfCookie = req.headers.get('cookie')?.split(';').find((c: string) => c.trim().startsWith('csrfToken='));
     const csrfCookieValue = csrfCookie ? csrfCookie.split('=')[1] : null;
     if (!csrfToken || !csrfCookieValue || csrfToken !== csrfCookieValue) {
       return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
@@ -31,7 +30,7 @@ export async function POST(req: Request) {
     }
 
     // Prevent duplicate accounts by email (case-insensitive)
-    const existingUser = await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } });
+    const existingUser = await prisma.user.findFirst({ where: { email: email } });
     if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
