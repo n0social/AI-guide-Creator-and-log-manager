@@ -14,10 +14,14 @@ export default function LoginPage() {
   const [csrfToken, setCsrfToken] = useState('');
 
   useEffect(() => {
-    // Generate and set CSRF token cookie on mount
-    const token = generateCsrfToken();
+    // Use existing CSRF token from cookie if present, else generate and set
+    const match = document.cookie.match(/csrfToken=([^;]+)/);
+    let token = match ? match[1] : '';
+    if (!token) {
+      token = generateCsrfToken();
+      document.cookie = `csrfToken=${token}; path=/; SameSite=Strict`;
+    }
     setCsrfToken(token);
-    document.cookie = `csrfToken=${token}; path=/; SameSite=Strict`;
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

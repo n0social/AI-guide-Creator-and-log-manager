@@ -20,21 +20,6 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
           console.log('Authorize Function: Received credentials', credentials);
-          // CSRF protection: require valid CSRF token (double submit cookie pattern)
-          const csrfToken = credentials?.csrfToken;
-          let csrfCookieValue = null;
-          if (typeof req !== 'undefined' && req.headers) {
-            const cookieHeader = req.headers.cookie || '';
-            const csrfCookie = cookieHeader.split(';').find((c: string) => c.trim().startsWith('csrfToken='));
-            csrfCookieValue = csrfCookie ? csrfCookie.split('=')[1] : null;
-          } else if (typeof window !== 'undefined') {
-            // fallback for client-side (should not happen in authorize)
-            csrfCookieValue = document.cookie.split('; ').find(row => row.startsWith('csrfToken='))?.split('=')[1];
-          }
-          if (!csrfToken || !csrfCookieValue || csrfToken !== csrfCookieValue) {
-            console.error('Authorize Function: Invalid or missing CSRF token');
-            return null;
-          }
           if (!credentials?.email || !credentials?.password) {
             console.error('Authorize Function: Missing email or password');
             return null;

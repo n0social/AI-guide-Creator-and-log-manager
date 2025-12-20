@@ -12,7 +12,7 @@ async function main() {
       name: 'Admin',
       email: 'admin@aiguides.com',
       password: await bcrypt.hash('admin123', 10),
-      role: 'ADMIN',
+      role: 'admin',
     },
   });
 

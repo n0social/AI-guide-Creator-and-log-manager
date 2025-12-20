@@ -17,7 +17,7 @@ export default async function UserAIGeneratePage() {
   if (!session || !session.user) {
     redirect('/');
   }
-  const isAdmin = session.user.role === 'admin';
+  const isAdmin = session.user.role?.toLowerCase() === 'admin';
   let hasSubscription = false;
   if (!isAdmin) {
     const user = await prisma.user.findUnique({

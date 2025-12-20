@@ -11,8 +11,8 @@ import { prisma } from '@/lib/prisma';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { name, email, role } = await req.json();
-  if (!name || !email || !role) {
-    return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
+  if (!role) {
+    return NextResponse.json({ error: 'Role is required.' }, { status: 400 });
   }
   try {
     const user = await prisma.user.update({

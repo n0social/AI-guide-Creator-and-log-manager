@@ -14,11 +14,16 @@ interface EditUserModalProps {
 }
 
 export default function EditUserModal({ user, open, onClose, onSave }: EditUserModalProps) {
-  const [form, setForm] = useState({ name: user.name, email: user.email, role: user.role });
+    const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    role: user?.role || 'user',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (!open) return null;
+  if (!open || !user) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,7 +34,14 @@ export default function EditUserModal({ user, open, onClose, onSave }: EditUserM
     setLoading(true);
     setError("");
     try {
-      await onSave({ ...user, ...form });
+      // Only update fields that are not empty, otherwise keep the original value
+      const updatedUser = {
+        ...user,
+        name: form.name !== '' ? form.name : user.name,
+        email: form.email !== '' ? form.email : user.email,
+        role: form.role
+      };
+      await onSave(updatedUser);
       onClose();
     } catch (err: any) {
       setError(err.message || "Failed to update user.");
@@ -50,7 +62,8 @@ export default function EditUserModal({ user, open, onClose, onSave }: EditUserM
             onChange={handleChange}
             className="w-full border rounded px-3 py-2"
             placeholder="Name"
-            required
+            // Name is not required when editing user
+            required={false}
           />
           <input
             type="email"
@@ -59,7 +72,7 @@ export default function EditUserModal({ user, open, onClose, onSave }: EditUserM
             onChange={handleChange}
             className="w-full border rounded px-3 py-2"
             placeholder="Email"
-            required
+            required={false}
           />
           <select
             name="role"
@@ -71,10 +84,34 @@ export default function EditUserModal({ user, open, onClose, onSave }: EditUserM
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
+          <button
+            type="button"
+            className="w-full mt-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            onClick={async () => {
+              setResetStatus(null);
+              try {
+                const res = await fetch(`/api/auth/forgot-password`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: user.email })
+                });
+                if (res.ok) {
+                  setResetStatus('Password reset email sent!');
+                } else {
+                  setResetStatus('Failed to send reset email.');
+                }
+              } catch {
+                setResetStatus('Failed to send reset email.');
+              }
+            }}
+          >
+            Send Password Reset Email
+          </button>
+          {resetStatus && <p className="text-blue-600 text-sm mt-1">{resetStatus}</p>}
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
-            <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white hover:bg-primary-700" disabled={loading}>
+            <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white hover:bg-primary-700" style={{opacity: 1, visibility: 'visible'}} disabled={loading}>
               {loading ? "Saving..." : "Save"}
             </button>
           </div>

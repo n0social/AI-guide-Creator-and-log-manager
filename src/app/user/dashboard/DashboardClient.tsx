@@ -37,10 +37,10 @@ export default function DashboardClient({ user, stats, users }: any) {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      <p className="mt-1 text-gray-600">Welcome, {user.name}!</p>
+      <h1 className="text-2xl font-bold text-gray-900 text-center">Dashboard</h1>
+      <p className="mt-1 text-gray-600 text-center">Welcome, {user.name}!</p>
       {/* Stats */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100">
@@ -74,17 +74,6 @@ export default function DashboardClient({ user, stats, users }: any) {
             </div>
           </div>
         </div>
-        <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-              <Eye className="h-6 w-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Views</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.views.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
       </div>
       {/* Metrics Section */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -109,7 +98,7 @@ export default function DashboardClient({ user, stats, users }: any) {
             <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-primary-600" />
               <span className="font-medium">Total Blog Views:</span>
-              <span>{/* TODO: Add blog views metric if available */}</span>
+              <span>{stats.blogViews.toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary-600" />
@@ -120,7 +109,7 @@ export default function DashboardClient({ user, stats, users }: any) {
         </div>
       </div>
       {/* User Management (admin only) */}
-      {user.role === 'admin' && (
+      {(user.role && user.role.toLowerCase() === 'admin') && usersState && usersState.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold text-gray-900">User Management</h2>
           <p className="mt-1 text-gray-600">Manage registered users below.</p>

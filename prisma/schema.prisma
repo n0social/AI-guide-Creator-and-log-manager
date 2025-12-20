@@ -20,6 +20,8 @@ model User {
   blogs         Blog[]
   accounts      Account[]
   subscription   Subscription? // Added relation to Subscription model
+  resetToken     String?   @unique
+  resetTokenExpiry DateTime?
 }
 
 model Category {

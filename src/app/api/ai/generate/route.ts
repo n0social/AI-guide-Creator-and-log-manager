@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Allow admins to bypass subscription check
+    // Allow admins to bypass subscription check (case-insensitive)
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role?.toLowerCase() !== 'admin')) {
       await checkSubscriptionLimit(session.user.id, contentType);
     }
 

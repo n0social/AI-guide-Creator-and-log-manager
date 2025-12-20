@@ -19,28 +19,22 @@ export default async function DashboardPage() {
   if (!user) {
     return <p>User not found.</p>;
   }
-  const [guidesCount, blogsCount, categoriesCount, totalViews, recentGuides, recentBlogs, users] = await Promise.all([
-    prisma.guide.count(),
-    prisma.blog.count(),
+
+  // User-specific stats
+  const [guidesCount, blogsCount, categoriesCount, userGuideViews, userBlogViews, users] = await Promise.all([
+    prisma.guide.count({ where: { authorId: user.id } }),
+    prisma.blog.count({ where: { authorId: user.id } }),
     prisma.category.count(),
-    prisma.guide.aggregate({ _sum: { views: true } }),
-    prisma.guide.findMany({
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    }),
-    prisma.blog.findMany({
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    }),
+    prisma.guide.aggregate({ _sum: { views: true }, where: { authorId: user.id } }),
+    prisma.blog.aggregate({ _sum: { views: true }, where: { authorId: user.id } }),
     prisma.user.findMany(),
   ]);
   const stats = {
     guides: guidesCount,
     blogs: blogsCount,
     categories: categoriesCount,
-    views: totalViews._sum.views || 0,
+    views: userGuideViews._sum.views || 0,
+    blogViews: userBlogViews._sum.views || 0,
   };
 
   return (

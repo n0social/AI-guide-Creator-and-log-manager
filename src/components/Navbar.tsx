@@ -31,38 +31,36 @@ export default function Navbar() {
 
 	return (
 		<header className="fixed inset-x-0 top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-			<nav className="mx-auto flex max-w-7xl items-center justify-between py-4 px-4 lg:px-8">
-				<div className="flex lg:flex-1">
-					<Link href="/" className="-m-1.5 p-1.5 flex items-center">
-						<span className="font-bold text-xl text-primary">Verbshift</span>
-					</Link>
-				</div>
-
-				<div className="flex lg:hidden">
-					<button
-						type="button"
-						className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-						onClick={() => setMobileMenuOpen(true)}
-					>
-						<Menu className="h-6 w-6" />
-					</button>
-				</div>
-
-				<div className="hidden lg:flex lg:gap-x-12">
-					{navigation.map((item) => (
-						<Link
-							key={item.name}
-							href={item.href}
-							className={cn(
-								'px-4 text-sm font-semibold leading-6 text-gray-900 hover:text-primary-600',
-								pathname === item.href && 'text-primary-600'
-							)}
+			<div className="mx-auto flex max-w-7xl items-center py-4 pr-4 lg:pr-8 pl-0 lg:pl-0">
+				<Link href="/" className="flex items-center mr-8">
+					<span className="font-bold text-xl text-primary">Verbshift</span>
+				</Link>
+				<nav className="flex-1 flex items-center justify-end">
+					<div className="hidden lg:flex lg:gap-x-12">
+						{navigation.map((item) => (
+							<Link
+								key={item.name}
+								href={item.href}
+								className={cn(
+									'px-4 text-sm font-semibold leading-6 text-gray-900 hover:text-primary-600',
+									pathname === item.href && 'text-primary-600'
+								)}
+							>
+								{item.name}
+							</Link>
+						))}
+					</div>
+					<div className="flex lg:hidden ml-4">
+						<button
+							type="button"
+							className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+							onClick={() => setMobileMenuOpen(true)}
 						>
-							{item.name}
-						</Link>
-					))}
-				</div>
-			</nav>
+							<Menu className="h-6 w-6" />
+						</button>
+					</div>
+				</nav>
+			</div>
 
 			{/* Mobile menu */}
 			<div className={cn('lg:hidden', mobileMenuOpen ? 'block' : 'hidden')}>
