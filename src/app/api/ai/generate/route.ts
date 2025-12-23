@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
               {
                 role: 'system',
                 content: contentType === 'guide'
-                  ? `You are an expert technical writer for a modern AI education website. Write comprehensive, in-depth, and well-structured AI guides in markdown format. Use clear section headings (H2, H3), bullet points, numbered steps, and code blocks where appropriate. Ensure that section headings are varied and contextually relevant to the content.`
+                  ? `You are an expert technical writer for a modern AI education website. Write comprehensive, in-depth, and well-structured AI guides in markdown format. Use clear section headings (H2, H3), bullet points, numbered steps, and code blocks where appropriate. Ensure that section headings are varied and contextually relevant to the content. Only reference AI tools if they are actually relevant and available for the topic. If no AI tool is applicable, do not mention or suggest one.`
                   : `You are an AI industry expert writing engaging blog posts. Write in markdown format with insights, analysis, and forward-looking perspectives. Ensure that section headings are varied and contextually relevant to the content.`,
               },
               {
@@ -151,7 +151,26 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           log('OpenAI API response parsed', data);
 
+
           let generatedContent = data.choices[0].message.content;
+
+          // Filter out irrelevant AI tool references for guides
+          if (contentType === 'guide') {
+            // Simple filter: remove lines that mention AI tools if no tool is actually relevant
+            // This can be improved with a more advanced check if needed
+            const aiToolKeywords = [
+              'AI tool', 'AI-powered', 'artificial intelligence tool', 'machine learning tool', 'AI assistant', 'AI app', 'AI software'
+            ];
+            // If none of the keywords are relevant to the topic, remove those lines
+            const topicLower = topic.toLowerCase();
+            const isAIToolRelevant = aiToolKeywords.some(keyword => topicLower.includes(keyword.toLowerCase()));
+            if (!isAIToolRelevant) {
+              generatedContent = generatedContent
+                .split('\n')
+                .filter((line: string) => !aiToolKeywords.some(keyword => line.toLowerCase().includes(keyword.toLowerCase())))
+                .join('\n');
+            }
+          }
 
           const lines = generatedContent.split('\n');
           const titleLine = lines.find((line: string) => line.startsWith('# '));

@@ -1,7 +1,11 @@
+
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const FeedbackForm = dynamic(() => import('@/components/FeedbackForm'), { ssr: false });
 
 export default async function SettingsDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -30,6 +34,9 @@ export default async function SettingsDashboardPage() {
         {/* Placeholder for purchase/upgrade logic */}
         <a href="/account/subscriptions" className="btn-primary">{subscription ? 'Manage Subscription' : 'Purchase Subscription'}</a>
       </div>
+
+      {/* Feedback Section */}
+      <FeedbackForm />
     </div>
   );
 }
