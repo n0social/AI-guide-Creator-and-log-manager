@@ -1,13 +1,12 @@
+
 'use client'
 
-import Link from 'next/link'
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { Menu, X, Sparkles, Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useSession } from 'next-auth/react'
-
-
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Sparkles, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
 import { Session } from 'next-auth';
 
 function getNavigation(session: Session | null | undefined) {
