@@ -71,7 +71,7 @@ async function runBotGuideGenerator() {
   const slug = title.toLowerCase().replace(/[^a-z0-9\- ]/g, '').replace(/\s+/g, '-');
 
   // Save guide to database as admin
-  const { prisma } = await import('@/lib/prisma');
+  // ...existing code...
   const adminUser = await prisma.user.findFirst({ where: { role: 'admin' } });
   if (!adminUser) {
     return { success: false, message: 'No admin user found.' };
