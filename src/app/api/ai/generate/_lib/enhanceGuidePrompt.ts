@@ -1,14 +1,14 @@
 // Returns a detailed guide prompt
 export function enhanceGuidePrompt(topic: string): string {
   return [
-    `Write an in-depth, comprehensive, and practical guide about: ${topic}.`,
-    `The guide should be detailed enough to give the reader a strong, working understanding of the subject, as if they spent 1-2 hours researching it.`,
-    `Structure the guide with clear sections and headers. For each section/header, write several paragraphs (not just a few sentences) with detailed explanations, examples, and actionable advice.`,
-    `Make the guide immersive: use storytelling, analogies, and real-world scenarios to draw the reader in. Use a conversational, engaging tone.`,
-    `Dive deep into each subtopic, providing context, background, and step-by-step instructions where relevant.`,
-    `Include graphs or visualizations (in markdown or mermaid format) whenever they would help explain a concept. If a graph is not needed, do not include one.`,
-    `If possible, reference or adapt graphs from credible articles (cite the source in a references section at the end).`,
-    `Avoid being superficial or generic. Each section should be thorough and feel like a mini-article on its own.`,
-    `Use immersive techniques: open sections with a scenario, question, or story. Make the reader feel like they're on a journey of discovery.`,
+    `Write a clear, simple, and practical How-to guide about: ${topic}.`,
+    `Focus on step-by-step instructions. Use numbered lists or bullet points for each step.`,
+    `Each step should be concise, actionable, and easy to follow, as if explaining to a beginner.`,
+    `Where helpful, include visuals: markdown image links (describe the image and suggest a real search keyword), diagrams, or mermaid code blocks.`,
+    `If a visual would clarify a step, add a placeholder image or diagram and describe what it should show.`,
+    `Use clear section headers for each major part of the process.`,
+    `Keep language simple and direct. Avoid jargon unless explained.`,
+    `At the end, include a references section with real, credible sources (no example.com or placeholder links). Only use actual URLs from reputable sites, and include a short description for each.`,
+    `Do not include unnecessary background or filler. Focus on helping the reader complete the task.`,
   ].join(' ');
 }

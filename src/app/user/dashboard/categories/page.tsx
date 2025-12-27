@@ -28,38 +28,6 @@ export default async function CategoriesDashboardPage() {
     take: 50,
   });
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
-      {/* User's Categories */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Your Categories</h2>
-        {userCategories.length === 0 ? (
-          <p className="text-gray-500">You haven&apos;t created content in any categories yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {userCategories.map((cat: Category) => (
-              <li key={cat.id} className="bg-white p-3 rounded shadow">
-                {cat.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {/* All Categories */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">All Categories</h2>
-        {allCategories.length === 0 ? (
-          <p className="text-gray-500">No categories found.</p>
-        ) : (
-          <ul className="space-y-2">
-            {allCategories.map((cat: Category) => (
-              <li key={cat.id} className="bg-white p-3 rounded shadow">
-                {cat.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
+    // This page has been removed. Guide categories are no longer used.
+    return null; // Return null or a different component if needed.
 }

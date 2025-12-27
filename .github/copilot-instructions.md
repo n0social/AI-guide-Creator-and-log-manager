@@ -59,3 +59,7 @@ src/
 - Use 'use client' only when necessary
 - Handle errors gracefully
 - Keep components small and focused
+
+## Guide Generator Notes
+- The Guide generator is now strictly a "How-to" generator. All guides are created as "How-to" content, and there is no category selection for guides. The focus is on step-by-step, practical instructional content.
+- Blog generation still supports multiple categories and personalities.

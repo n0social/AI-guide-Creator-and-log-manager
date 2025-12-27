@@ -15,6 +15,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-chrome.action.onClicked.addListener(() => {
-  chrome.tabs.create({ url: 'https://verbshift.com' });
+
+// Listen for messages from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'VERBSHIFT_GUIDE_ME_OPTION') {
+    // Open the extension popup with selected text and option as query params
+    console.log('Received message in background.js:', message);
+    chrome.windows.create({
+      url: chrome.runtime.getURL(`popup.html?text=${encodeURIComponent(message.text)}&option=${encodeURIComponent(message.option)}`),
+      type: 'popup',
+      width: 400,
+      height: 500
+    }, function(window) {
+      console.log('Popup window created:', window);
+    });
+    sendResponse({status: 'popup_opened'});
+  }
 });

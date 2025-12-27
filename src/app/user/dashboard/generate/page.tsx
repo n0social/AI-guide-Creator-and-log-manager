@@ -6,10 +6,10 @@ import { redirect } from 'next/navigation';
 
 const AIGenerateClient = dynamic(() => import('@/app/admin/(dashboard)/ai/AIGenerateClient'), { ssr: false });
 
-async function getCategories() {
-  return prisma.category.findMany({
-    orderBy: { name: 'asc' },
-  });
+
+// Only How-to for guides
+function getHowToCategory() {
+  return [{ id: 'how-to', name: 'How-to', slug: 'how-to', description: '', color: '#0ea5e9', _count: { guides: 0, blogs: 0 } }];
 }
 
 export default async function UserAIGeneratePage() {
@@ -26,6 +26,6 @@ export default async function UserAIGeneratePage() {
     });
     hasSubscription = !!user?.subscription && user.subscription.tier !== '';
   }
-  const categories = await getCategories();
+  const categories = getHowToCategory();
   return <AIGenerateClient categories={categories} canGenerate={isAdmin || hasSubscription} />;
 }

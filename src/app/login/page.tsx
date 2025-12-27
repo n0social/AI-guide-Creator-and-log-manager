@@ -24,6 +24,15 @@ export default function LoginPage() {
     setCsrfToken(token);
   }, []);
 
+  // Store topic and guideType from query params in localStorage if present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const topic = params.get('topic');
+    const guideType = params.get('guideType');
+    if (topic) localStorage.setItem('pendingTopic', topic);
+    if (guideType) localStorage.setItem('pendingGuideType', guideType);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
@@ -37,7 +46,16 @@ export default function LoginPage() {
       callbackUrl: '/user/dashboard',
     });
     if (res?.ok) {
-      router.push(res.url || '/user/dashboard');
+      // After login, redirect to generate page with topic/guideType if present
+      const topic = localStorage.getItem('pendingTopic');
+      const guideType = localStorage.getItem('pendingGuideType');
+      if (topic || guideType) {
+        localStorage.removeItem('pendingTopic');
+        localStorage.removeItem('pendingGuideType');
+        router.push(`/user/dashboard/generate?topic=${encodeURIComponent(topic || '')}&guideType=${encodeURIComponent(guideType || '')}`);
+      } else {
+        router.push(res.url || '/user/dashboard');
+      }
     } else {
       setError('Login failed. Please check your credentials.');
     }

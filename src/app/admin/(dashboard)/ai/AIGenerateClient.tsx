@@ -27,9 +27,23 @@ const BLOG_PERSONALITIES = [
 export default function AIGenerateClient({ categories, canGenerate }: AIGenerateClientProps) {
 
   const router = useRouter();
-  const [contentType, setContentType] = useState<'guide' | 'blog'>('guide');
-  const [topic, setTopic] = useState('');
-  const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
+  // Read query params for topic and guideType
+  let initialTopic = '';
+  let initialContentType: 'guide' | 'blog' = 'guide';
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    initialTopic = params.get('topic') || '';
+    const guideType = params.get('guideType');
+    if (guideType && guideType.toLowerCase().includes('blog')) {
+      initialContentType = 'blog';
+    } else if (guideType && guideType.toLowerCase().includes('guide')) {
+      initialContentType = 'guide';
+    }
+  }
+  const [contentType, setContentType] = useState<'guide' | 'blog'>(initialContentType);
+  const [topic, setTopic] = useState(initialTopic);
+  // No category selection for guides; always 'How-to'
+  const [categoryId, setCategoryId] = useState('how-to');
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<{
     title: string;
@@ -137,8 +151,7 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
 
   // Use different categories for blog vs guide
   const blogCategories = BLOG_CATEGORIES;
-  const guideCategories = categories;
-  const currentCategories = contentType === 'blog' ? blogCategories : guideCategories;
+  const currentCategories = contentType === 'blog' ? blogCategories : [{ id: 'how-to', name: 'How-to', slug: 'how-to', description: '', color: '#0ea5e9', _count: { guides: 0, blogs: 0 } }];
 
   return (
     <div className="space-y-8">
@@ -148,10 +161,10 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-accent-500">
             <Wand2 className="h-5 w-5 text-white" />
           </div>
-          Content Generator
+          Astrapto
         </h1>
         <p className="mt-2 text-gray-600">
-          Generate guides and blog posts using AI. Just provide a topic and let the magic happen!
+          Instantly generate step-by-step How-to guides and blog posts with AI.
         </p>
       </div>
 
@@ -208,25 +221,32 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
               />
             </div>
 
-            {/* Category */}
-            <div>
-              <label htmlFor="category" className="label">
-                Category
-              </label>
-              <select
-                id="category"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="input"
-                required
-              >
-                {currentCategories.map((cat) => (
-                  <option key={cat.slug} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Category (Guides: always How-to) */}
+            {contentType === 'blog' ? (
+              <div>
+                <label htmlFor="category" className="label">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="input"
+                  required
+                >
+                  {currentCategories.map((cat) => (
+                    <option key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className="label">Guide Type</label>
+                <input className="input" value="How-to" disabled />
+              </div>
+            )}
 
             {/* Blog Tone/Personality Selector */}
             {contentType === 'blog' && (

@@ -1,0 +1,10 @@
+Chrome Extension Vision:
+
+- When a user highlights text (e.g., a food item) on any webpage, a popup appears with a "Guide me" button.
+- If pressed, the popup offers options such as:
+  - "How to make this recipe for your [event/holiday]"
+- The extension requests access to the user's calendar.
+- The guide generation adapts the How-to guide based on the selected date and season from the user's calendar (e.g., tailoring recipes for holidays or events).
+- The extension will send the context (highlighted text, event/date info) to the backend for custom How-to guide creation.
+
+Next steps: UI/UX for popup, calendar integration, and backend API adjustments for context-aware guide generation.

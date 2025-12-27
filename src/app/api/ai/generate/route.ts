@@ -149,10 +149,8 @@ export async function POST(request: NextRequest) {
     let excerpt = '';
     let references: string[] = [];
     if (contentType === 'guide') {
-      // Guide generation logic (outline, prompt, OpenAI call, etc.)
-      const outline = await getGuideOutline(topic, openaiApiKey);
-      const flatOutline = outline.filter((s: string) => !/^\d+\.\d+/.test(s));
-      const guidePrompt = enhanceGuidePrompt(topic) + '\n\nHere is the outline for the guide:\n' + flatOutline.map((s, i) => `${i+1}. ${s}`).join('\n') + '\n\nWrite the guide, following this outline exactly. Each section should be full and complete, not split into subpoints.';
+      // Strictly How-to: no outline, no categories, just step-by-step instructions
+      const guidePrompt = enhanceGuidePrompt(topic);
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -160,14 +158,14 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4',
           messages: [
             {
               role: 'system',
               content: guidePrompt,
             },
           ],
-          max_tokens: 1500,
+          max_tokens: 1800,
           temperature: 0.7,
         }),
       });
@@ -179,55 +177,17 @@ export async function POST(request: NextRequest) {
       }
       // Title/excerpt extraction
       const lines = generatedContent.split('\n');
-      const titleLine = lines.find((line: string) => line.startsWith('# '));
+      const titleLine = lines.find((line) => line.startsWith('# '));
       title = titleLine ? titleLine.replace('# ', '').trim() : topic;
-      // Excerpt
-      const excerptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'user',
-              content: `Write a catchy, curiosity-driven, and engaging 1-2 sentence excerpt for the following content. The excerpt should summarize the article in a way that grabs attention, uses conversational language, and poses a question or invites the reader to explore further. Avoid generic summaries. Content: ${generatedContent}`,
-            },
-          ],
-          max_tokens: 60,
-          temperature: 0.9,
-        }),
-      });
-      if (excerptResponse.ok) {
-        const excerptData = await excerptResponse.json();
-        excerpt = excerptData.choices[0].message.content.trim();
+      // Excerpt: first 2-3 lines after title
+      const previewLines = lines.filter(line => line && !line.startsWith('# ')).slice(0, 3);
+      excerpt = `${title}\n${previewLines.join(' ').slice(0, 180)}${previewLines.join(' ').length > 180 ? '...' : ''}`.trim();
+      // References: look for a section at the end
+      const refStart = lines.findIndex(line => /references[:]?/i.test(line));
+      if (refStart !== -1) {
+        references = lines.slice(refStart + 1).filter(line => line.trim().length > 0);
       } else {
-        excerpt = `Curious about ${topic.toLowerCase()}? Dive into this engaging ${contentType} to learn more!`;
-      }
-      // References (for guides only)
-      const referencesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'user',
-              content: `Provide a list of credible references and sources for the topic: ${topic}. Include URLs and brief descriptions for each source.`,
-            },
-          ],
-          max_tokens: 250,
-          temperature: 0.5,
-        }),
-      });
-      if (referencesResponse.ok) {
-        const referencesData = await referencesResponse.json();
-        references = referencesData.choices[0].message.content.split('\n').filter(Boolean);
+        references = [];
       }
     } else {
       // Blog generation (prompt and emoji limiting handled in _lib)

@@ -5,19 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verbshift Extension</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 1.5em; background: #f9fafb; }
-    .container { text-align: center; }
-    .logo { width: 48px; height: 48px; margin-bottom: 1em; }
-    .btn { background: #0ea5e9; color: #fff; border: none; border-radius: 6px; padding: 0.75em 1.5em; font-size: 1em; cursor: pointer; transition: background 0.2s; }
-    .btn:hover { background: #0369a1; }
+    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f3f4f6; }
+    .container {
+      max-width: 360px;
+      margin: 2em auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2em 1.5em 1.5em 1.5em;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .logo {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 1em;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(14,165,233,0.12);
+    }
+    h2 {
+      font-size: 1.35em;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 0.5em;
+    }
+    #selected-text-container {
+      background: #f9fafb;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      padding: 1em;
+      margin-bottom: 1.2em;
+      width: 100%;
+      text-align: left;
+    }
+    #selected-text {
+      margin: 0.5em 0;
+      color: #2563eb;
+      font-size: 1em;
+      font-weight: 500;
+      word-break: break-word;
+    }
+    #selected-option {
+      margin: 0.5em 0;
+      color: #0369a1;
+      font-size: 1em;
+      font-weight: 500;
+    }
+    .btn {
+      background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.85em 2em;
+      font-size: 1.08em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(14,165,233,0.08);
+      transition: background 0.2s, box-shadow 0.2s;
+      margin-top: 0.5em;
+    }
+    .btn:hover {
+      background: linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%);
+      box-shadow: 0 4px 16px rgba(14,165,233,0.16);
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <img src="icon48.png" alt="Verbshift Logo" class="logo" />
     <h2>Verbshift Bridge</h2>
-    <p>Send highlighted text to Verbshift and generate professional guides with AI.</p>
-    <button class="btn" onclick="window.open('https://verbshift.com', '_blank')">Go to Verbshift</button>
+    <div id="selected-text-container">
+      <div style="font-size:0.98em; color:#64748b; font-weight:600;">Selected Text:</div>
+      <div id="selected-text"></div>
+      <div style="font-size:0.98em; color:#64748b; font-weight:600; margin-top:0.7em;">Guide Type:</div>
+      <div id="selected-option"></div>
+    </div>
+    <button class="btn" id="go-to-verbshift">Go to Verbshift</button>
+    <script src="popup.js"></script>
   </div>
 </body>
 </html>

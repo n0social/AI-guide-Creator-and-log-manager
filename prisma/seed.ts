@@ -21,6 +21,17 @@ async function main() {
   // Create categories
   const categories = await Promise.all([
     prisma.category.upsert({
+      where: { id: 'how-to' },
+      update: {},
+      create: {
+        id: 'how-to',
+        name: 'How-to',
+        slug: 'how-to',
+        description: 'Step-by-step instructional guides',
+        color: '#0ea5e9',
+      },
+    }),
+    prisma.category.upsert({
       where: { slug: 'getting-started' },
       update: {},
       create: {
