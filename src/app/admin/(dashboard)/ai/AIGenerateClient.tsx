@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wand2, Sparkles, BookOpen, FileText, Copy, Check, ArrowRight } from 'lucide-react'
+import { BLOG_CATEGORIES } from '@/app/api/ai/generate/_lib/blogCategories'
 
 interface Category {
   id: string
@@ -10,14 +11,20 @@ interface Category {
   slug: string
 }
 
-
 interface AIGenerateClientProps {
   categories: Category[];
   canGenerate?: boolean;
 }
 
-export default function AIGenerateClient({ categories, canGenerate }: AIGenerateClientProps) {
+const BLOG_PERSONALITIES = [
+  { key: 'friendly', label: 'Friendly' },
+  { key: 'witty', label: 'Witty' },
+  { key: 'professional', label: 'Professional' },
+  { key: 'inspirational', label: 'Inspirational' },
+  { key: 'chill', label: 'Chill' },
+];
 
+export default function AIGenerateClient({ categories, canGenerate }: AIGenerateClientProps) {
 
   const router = useRouter();
   const [contentType, setContentType] = useState<'guide' | 'blog'>('guide');
@@ -32,6 +39,7 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [references, setReferences] = useState<string[]>([]);
+  const [personality, setPersonality] = useState('friendly');
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,20 +56,21 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, contentType }),
+        body: JSON.stringify({ topic, contentType, personality }),
       });
 
-      let data;
+
+      let data, text;
       try {
-        data = await res.json();
+        data = await res.clone().json();
       } catch (jsonErr) {
-        // If response is not JSON, show the raw text (likely an error page)
-        const text = await res.text();
+        text = await res.text();
         throw new Error(`Unexpected response from server: ${text.slice(0, 200)}`);
       }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to generate content');
+        // Use the already-parsed data if available, otherwise fallback to text
+        throw new Error((data && data.error) || text || 'Failed to generate content');
       }
 
       setGeneratedContent(data);
@@ -125,6 +134,11 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  // Use different categories for blog vs guide
+  const blogCategories = BLOG_CATEGORIES;
+  const guideCategories = categories;
+  const currentCategories = contentType === 'blog' ? blogCategories : guideCategories;
 
   return (
     <div className="space-y-8">
@@ -206,13 +220,32 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
                 className="input"
                 required
               >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
+                {currentCategories.map((cat) => (
+                  <option key={cat.slug} value={cat.slug}>
                     {cat.name}
                   </option>
                 ))}
               </select>
             </div>
+
+            {/* Blog Tone/Personality Selector */}
+            {contentType === 'blog' && (
+              <div>
+                <label htmlFor="personality" className="label">
+                  Blog Tone
+                </label>
+                <select
+                  id="personality"
+                  value={personality}
+                  onChange={e => setPersonality(e.target.value)}
+                  className="input"
+                >
+                  {BLOG_PERSONALITIES.map((p) => (
+                    <option key={p.key} value={p.key}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 break-all">
@@ -274,7 +307,13 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
             )}
           </div>
 
-          {generatedContent ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-primary-500 animate-pulse">
+              <Wand2 className="h-12 w-12 mb-4" />
+              <p className="text-lg font-semibold">The AI writer is working on your request...</p>
+              <p className="mt-2 text-sm text-gray-500">This may take up to a minute for in-depth content. Please wait!</p>
+            </div>
+          ) : generatedContent ? (
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-gray-500 uppercase">Title</label>
@@ -294,7 +333,7 @@ export default function AIGenerateClient({ categories, canGenerate }: AIGenerate
                 </div>
               </div>
 
-              {references.length > 0 && (
+              {references.length > 0 && contentType === 'guide' && (
                 <div className="mt-6">
                   <label className="text-xs font-medium text-gray-500 uppercase">References</label>
                   <ul className="mt-2 list-disc list-inside text-sm text-blue-700">

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import React from 'react';
 import Link from 'next/link'
 import { Clock, Calendar, ArrowLeft, Eye, User } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
@@ -40,15 +41,35 @@ async function getGuide(slug: string) {
 
 export default async function GuidePage({ params }: GuidePageProps) {
   const data = await getGuide(params.slug)
-
   if (!data) {
     notFound()
   }
-
   const { guide, relatedGuides } = data
-
+  const baseUrl = 'https://yourdomain.com'; // TODO: Replace with your real domain
+  const canonicalUrl = `${baseUrl}/guides/${guide.slug}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": guide.title,
+    "description": guide.excerpt,
+    "url": canonicalUrl,
+    "author": {
+      "@type": "Person",
+      "name": guide.author.name
+    },
+    "datePublished": guide.createdAt.toISOString(),
+    "image": guide.coverImage ? `${baseUrl}${guide.coverImage}` : undefined
+  };
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      <head>
+        <link rel="canonical" href={canonicalUrl} />
+      </head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="min-h-screen bg-white">
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-primary-50 via-white to-accent-50 border-b border-gray-100">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
@@ -144,5 +165,6 @@ export default async function GuidePage({ params }: GuidePageProps) {
         </section>
       )}
     </div>
+    </>
   )
 }

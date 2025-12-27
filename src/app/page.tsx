@@ -41,9 +41,25 @@ async function getFeaturedContent() {
 
 export default async function HomePage() {
   const { guides, blogs, categories } = await getFeaturedContent()
-
+  const baseUrl = 'https://yourdomain.com'; // TODO: Replace with your real domain
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Verbshift AI Guides",
+    "url": baseUrl,
+    "description": "AI Guides, Blogs, and Content Generation Platform.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${baseUrl}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-background">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />

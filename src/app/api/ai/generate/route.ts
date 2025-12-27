@@ -1,8 +1,36 @@
+// Helper to remove emojis from a string
+function removeEmojis(str: string): string {
+  return str.split('').filter(function(char: string) {
+    const code = char.charCodeAt(0);
+    // Exclude common emoji ranges
+    if (
+      (code >= 0x2600 && code <= 0x27BF) || // Misc symbols & Dingbats
+      (code >= 0x1F600 && code <= 0x1F64F) || // Emoticons
+      (code >= 0x1F300 && code <= 0x1F5FF) || // Misc symbols & pictographs
+      (code >= 0x1F680 && code <= 0x1F6FF) || // Transport & map symbols
+      (code >= 0x1F700 && code <= 0x1F77F) || // Alchemical symbols
+      (code >= 0x1F780 && code <= 0x1F7FF) || // Geometric Shapes Extended
+      (code >= 0x1F800 && code <= 0x1F8FF) || // Supplemental Arrows-C
+      (code >= 0x1F900 && code <= 0x1F9FF) || // Supplemental Symbols and Pictographs
+      (code >= 0x1FA00 && code <= 0x1FA6F) || // Chess Symbols
+      (code >= 0x1FA70 && code <= 0x1FAFF)    // Symbols and Pictographs Extended-A
+    ) {
+      return false;
+    }
+    return true;
+  }).join('');
+}
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import stripe from '@/lib/stripe';
+import { getGuideOutline } from './_lib/getGuideOutline';
+import { enhanceGuidePrompt } from './_lib/enhanceGuidePrompt';
+import { PERSONALITY_MATRIX } from './_lib/personalityMatrix';
+// import { limitEmojis } from './_lib/limitEmojis';
+import { buildBlogPrompt } from './_lib/blogPrompt';
+import { cleanBlogContent } from './_lib/cleanBlogContent';
 
 function log(message: string, data?: any) {
   const timestamp = new Date().toISOString();
@@ -74,28 +102,30 @@ async function createOneTimePaymentSession(userId: string, contentType: string) 
   return session.url;
 }
 
+// Utility to generate a slug from a string
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export async function POST(request: NextRequest) {
   try {
-    log('Received POST request to /api/ai/generate');
-
+    // Parse and validate request
     const session = await getServerSession(authOptions);
-    log('Session retrieved', session);
-
     if (!session?.user?.id) {
-      log('Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
-    log('Request body parsed', body);
-
-    const { topic, contentType, oneTimePayment } = body;
-
+    const { topic, contentType, oneTimePayment, personality = 'friendly' } = body;
     if (!topic || !contentType) {
-      log('Validation error: Missing topic or contentType');
       return NextResponse.json({ error: 'Topic and content type are required' }, { status: 400 });
     }
-
+    // Payment logic
     if (oneTimePayment) {
       try {
         const paymentUrl = await createOneTimePaymentSession(session.user.id, contentType);
@@ -104,185 +134,150 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: (error as Error).message }, { status: 400 });
       }
     }
-
-    // Allow admins to bypass subscription check (case-insensitive)
+    // Subscription check
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (!user || (user.role?.toLowerCase() !== 'admin')) {
       await checkSubscriptionLimit(session.user.id, contentType);
     }
-
     const openaiApiKey = process.env.OPENAI_API_KEY;
-    log('OpenAI API key retrieved');
-
-    if (openaiApiKey) {
-      try {
-        log('Sending request to OpenAI API', { topic, contentType });
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openaiApiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [
-              {
-                role: 'system',
-                content: contentType === 'guide'
-                  ? `You are an expert technical writer for a modern AI education website. Write comprehensive, in-depth, and well-structured AI guides in markdown format. Use clear section headings (H2, H3), bullet points, numbered steps, and code blocks where appropriate. Ensure that section headings are varied and contextually relevant to the content. Only reference AI tools if they are actually relevant and available for the topic. If no AI tool is applicable, do not mention or suggest one.`
-                  : `You are an AI industry expert writing engaging blog posts. Write in markdown format with insights, analysis, and forward-looking perspectives. Ensure that section headings are varied and contextually relevant to the content.`,
-              },
-              {
-                role: 'user',
-                content: contentType === 'guide'
-                  ? `Write a detailed, high-quality AI guide about: ${topic}.`
-                  : `Write a long-form, in-depth, and original AI blog post about: ${topic}.`,
-              },
-            ],
-            max_tokens: 2000,
-            temperature: 0.7,
-          }),
-        });
-
-        log('OpenAI API response received', { status: response.status });
-
-        if (response.ok) {
-          const data = await response.json();
-          log('OpenAI API response parsed', data);
-
-
-          let generatedContent = data.choices[0].message.content;
-
-          // Filter out irrelevant AI tool references for guides
-          if (contentType === 'guide') {
-            // Simple filter: remove lines that mention AI tools if no tool is actually relevant
-            // This can be improved with a more advanced check if needed
-            const aiToolKeywords = [
-              'AI tool', 'AI-powered', 'artificial intelligence tool', 'machine learning tool', 'AI assistant', 'AI app', 'AI software'
-            ];
-            // If none of the keywords are relevant to the topic, remove those lines
-            const topicLower = topic.toLowerCase();
-            const isAIToolRelevant = aiToolKeywords.some(keyword => topicLower.includes(keyword.toLowerCase()));
-            if (!isAIToolRelevant) {
-              generatedContent = generatedContent
-                .split('\n')
-                .filter((line: string) => !aiToolKeywords.some(keyword => line.toLowerCase().includes(keyword.toLowerCase())))
-                .join('\n');
-            }
-          }
-
-          const lines = generatedContent.split('\n');
-          const titleLine = lines.find((line: string) => line.startsWith('# '));
-          const title = titleLine ? titleLine.replace('# ', '').trim() : topic;
-
-          const excerptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${openaiApiKey}`,
-            },
-            body: JSON.stringify({
-              model: 'gpt-3.5-turbo',
-              messages: [
-                {
-                  role: 'user',
-                  content: `Write a catchy, curiosity-driven, and engaging 1-2 sentence excerpt for the following content. The excerpt should summarize the article in a way that grabs attention, uses conversational language, and poses a question or invites the reader to explore further. Avoid generic summaries. Content: ${generatedContent}`,
-                },
-              ],
-              max_tokens: 100,
-              temperature: 0.9,
-            }),
-          });
-
-          log('Excerpt generation response received', { status: excerptResponse.status });
-
-          let excerpt = `Curious about ${topic.toLowerCase()}? Dive into this engaging ${contentType} to learn more!`;
-          if (excerptResponse.ok) {
-            const excerptData = await excerptResponse.json();
-            log('Excerpt generation response parsed', excerptData);
-            excerpt = excerptData.choices[0].message.content.trim();
-          }
-
-          // New logic to search for references
-          const referencesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${openaiApiKey}`,
-            },
-            body: JSON.stringify({
-              model: 'gpt-4',
-              messages: [
-                {
-                  role: 'user',
-                  content: `Provide a list of credible references and sources for the topic: ${topic}. Include URLs and brief descriptions for each source.`,
-                },
-              ],
-              max_tokens: 500,
-              temperature: 0.5,
-            }),
-          });
-
-          log('References generation response received', { status: referencesResponse.status });
-
-          let references = [];
-          if (referencesResponse.ok) {
-            const referencesData = await referencesResponse.json();
-            log('References generation response parsed', referencesData);
-            references = referencesData.choices[0].message.content.split('\n').filter(Boolean);
-          }
-
-          // If a headline is provided, perform a search for references
-          if (contentType === 'blog' && topic) {
-            const searchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${openaiApiKey}`,
-              },
-              body: JSON.stringify({
-                model: 'gpt-4',
-                messages: [
-                  {
-                    role: 'user',
-                    content: `Search online for credible references related to the headline: ${topic}. Provide a list of URLs and brief descriptions for each source.`,
-                  },
-                ],
-                max_tokens: 500,
-                temperature: 0.5,
-              }),
-            });
-
-            log('Headline-based reference search response received', { status: searchResponse.status });
-
-            if (searchResponse.ok) {
-              const searchData = await searchResponse.json();
-              log('Headline-based reference search response parsed', searchData);
-              references = searchData.choices[0].message.content.split('\n').filter(Boolean);
-            }
-          }
-
-          // Append references to the bottom of the blog post
-          if (contentType === 'blog' && references.length > 0) {
-            generatedContent += '\n\n## References\n';
-            references.forEach((ref: string) => {
-              generatedContent += `- ${ref}\n`;
-            });
-          }
-
-          log('Content generation successful', { title, excerpt, references });
-          return NextResponse.json({ title, excerpt, content: generatedContent, references });
-        }
-      } catch (apiError) {
-        log('OpenAI API error', apiError);
-      }
+    if (!openaiApiKey) {
+      return NextResponse.json({ error: 'AI content generation failed. Please try again later or contact support.' }, { status: 500 });
     }
-
-    log('OpenAI failed or not configured, returning error');
-    return NextResponse.json({ error: 'AI content generation failed. Please try again later or contact support.' }, { status: 500 });
+    // Content generation
+    let generatedContent = '';
+    let title = topic;
+    let excerpt = '';
+    let references: string[] = [];
+    if (contentType === 'guide') {
+      // Guide generation logic (outline, prompt, OpenAI call, etc.)
+      const outline = await getGuideOutline(topic, openaiApiKey);
+      const flatOutline = outline.filter((s: string) => !/^\d+\.\d+/.test(s));
+      const guidePrompt = enhanceGuidePrompt(topic) + '\n\nHere is the outline for the guide:\n' + flatOutline.map((s, i) => `${i+1}. ${s}`).join('\n') + '\n\nWrite the guide, following this outline exactly. Each section should be full and complete, not split into subpoints.';
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: guidePrompt,
+            },
+          ],
+          max_tokens: 1500,
+          temperature: 0.7,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        generatedContent = data.choices[0].message.content;
+      } else {
+        throw new Error('Failed to generate guide content');
+      }
+      // Title/excerpt extraction
+      const lines = generatedContent.split('\n');
+      const titleLine = lines.find((line: string) => line.startsWith('# '));
+      title = titleLine ? titleLine.replace('# ', '').trim() : topic;
+      // Excerpt
+      const excerptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'user',
+              content: `Write a catchy, curiosity-driven, and engaging 1-2 sentence excerpt for the following content. The excerpt should summarize the article in a way that grabs attention, uses conversational language, and poses a question or invites the reader to explore further. Avoid generic summaries. Content: ${generatedContent}`,
+            },
+          ],
+          max_tokens: 60,
+          temperature: 0.9,
+        }),
+      });
+      if (excerptResponse.ok) {
+        const excerptData = await excerptResponse.json();
+        excerpt = excerptData.choices[0].message.content.trim();
+      } else {
+        excerpt = `Curious about ${topic.toLowerCase()}? Dive into this engaging ${contentType} to learn more!`;
+      }
+      // References (for guides only)
+      const referencesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'user',
+              content: `Provide a list of credible references and sources for the topic: ${topic}. Include URLs and brief descriptions for each source.`,
+            },
+          ],
+          max_tokens: 250,
+          temperature: 0.5,
+        }),
+      });
+      if (referencesResponse.ok) {
+        const referencesData = await referencesResponse.json();
+        references = referencesData.choices[0].message.content.split('\n').filter(Boolean);
+      }
+    } else {
+      // Blog generation (prompt and emoji limiting handled in _lib)
+      const { prompt: blogPrompt, maxEmojis } = buildBlogPrompt(topic, personality);
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: blogPrompt,
+            },
+          ],
+          max_tokens: 700,
+          temperature: 0.95,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        let content = data.choices[0].message.content;
+        // Remove all emojis from content
+        content = removeEmojis(content);
+        content = cleanBlogContent(content);
+        if (!content || !content.trim()) {
+          // Only block if content is truly empty (after cleaning)
+          return NextResponse.json({ error: 'AI generated no content. Please try again.' }, { status: 500 });
+        }
+        generatedContent = content;
+      } else {
+        throw new Error('Failed to generate blog content');
+      }
+      // Title/excerpt extraction for blog
+      const lines = generatedContent.split('\n');
+      const titleLine = lines.find((line: string) => line.startsWith('# '));
+      title = titleLine ? titleLine.replace('# ', '').trim() : topic;
+      // Excerpt: preview-style, not a sales pitch
+      const previewLines = lines.filter(line => line && !line.startsWith('# ')).slice(0, 3);
+      excerpt = `${title}\n${previewLines.join(' ').slice(0, 180)}${previewLines.join(' ').length > 180 ? '...' : ''}`.trim();
+      references = [];
+    }
+    // Slug
+    const slug = slugify(title);
+    // Response
+    return NextResponse.json({ title, slug, excerpt, content: generatedContent, references });
   } catch (error) {
-    log('Error generating content', error);
     return NextResponse.json({ error: 'Failed to generate content' }, { status: 500 });
   }
 }

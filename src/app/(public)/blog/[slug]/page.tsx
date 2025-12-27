@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import React from 'react';
 import Link from 'next/link'
 import { Clock, Calendar, ArrowLeft, Eye, User } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
@@ -40,15 +41,35 @@ async function getBlog(slug: string) {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const data = await getBlog(params.slug)
-
   if (!data) {
     notFound()
   }
-
   const { blog, relatedPosts } = data
-
+  const baseUrl = 'https://yourdomain.com'; // TODO: Replace with your real domain
+  const canonicalUrl = `${baseUrl}/blog/${blog.slug}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": blog.title,
+    "description": blog.excerpt,
+    "url": canonicalUrl,
+    "author": {
+      "@type": "Person",
+      "name": blog.author.name
+    },
+    "datePublished": blog.createdAt.toISOString(),
+    "image": blog.coverImage ? `${baseUrl}${blog.coverImage}` : undefined
+  };
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      <head>
+        <link rel="canonical" href={canonicalUrl} />
+      </head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="min-h-screen bg-white">
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-primary-50 via-white to-accent-50 border-b border-gray-100">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
@@ -144,5 +165,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </section>
       )}
     </div>
+    </>
   )
 }
