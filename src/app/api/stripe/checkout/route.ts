@@ -29,6 +29,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Stripe checkout error:', error);
-    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+    // Provide a mailto link for the user to contact admin directly
+    const adminEmail = 'harborworksdigital@gmail.com';
+    const mailto = `mailto:${adminEmail}?subject=Stripe%20Checkout%20Error&body=I%20encountered%20an%20error%20while%20trying%20to%20checkout.%20Error%20details:%20${encodeURIComponent(error instanceof Error ? error.message : String(error))}`;
+    return NextResponse.json({ 
+      error: 'Failed to create checkout session',
+      contact: mailto
+    }, { status: 500 });
   }
 }

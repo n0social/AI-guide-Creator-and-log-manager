@@ -51,22 +51,19 @@ const GenerateNowPage: React.FC = () => {
       setError('Please complete the payment first.');
       return;
     }
-
     setLoading(true);
     setError('');
     setGeneratedContent(null);
-
     try {
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, contentType: 'guide', categoryId: 'how-to' }),
       });
-
       if (!res.ok) {
-        throw new Error('Failed to generate content');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to generate content');
       }
-
       const data = await res.json();
       setGeneratedContent(data as GeneratedContent);
     } catch (err: any) {

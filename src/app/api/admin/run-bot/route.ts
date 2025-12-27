@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // Import your guide generator logic here
 // For demo, we'll use a simple function
 async function runBotGuideGenerator() {
-  // Example topics for Machine Learning and Prompt Engineering
+  // Example topics for guides
   const topics = [
     'How do I train a neural network for image classification?',
     'What is overfitting in machine learning and how can I prevent it?',
@@ -11,9 +11,24 @@ async function runBotGuideGenerator() {
     'What are the best practices for prompt engineering with GPT-4?',
     'How do I fine-tune a machine learning model for better accuracy?',
     'How can I use prompt engineering to get more creative AI outputs?',
+    'How do I troubleshoot a slow computer?',
+    'How do I get started with IT support?',
+    'How do I use a new software tool?',
+    'How do I solve common network issues?',
+    'How do I get started with machine learning?',
+    'How do I write a how-to guide?',
   ];
   const topic = topics[Math.floor(Math.random() * topics.length)];
-  const category = topic.toLowerCase().includes('prompt') ? 'Prompt Engineering' : 'Machine Learning';
+
+  // Fetch all current categories from the database
+  const { prisma } = await import('@/lib/prisma');
+  const allCategories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
+  if (!allCategories.length) {
+    return { success: false, message: 'No categories found in the database.' };
+  }
+  // Randomly select a category from the current list
+  const randomCategory = allCategories[Math.floor(Math.random() * allCategories.length)];
+  const category = randomCategory.name;
 
   // Generate guide content using OpenAI directly
   const openaiApiKey = process.env.OPENAI_API_KEY;
