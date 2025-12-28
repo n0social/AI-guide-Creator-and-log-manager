@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4.1',
           messages: [
             {
               role: 'system',
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4.1',
           messages: [
             {
               role: 'system',

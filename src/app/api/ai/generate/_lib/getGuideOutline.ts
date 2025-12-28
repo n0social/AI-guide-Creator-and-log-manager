@@ -7,7 +7,7 @@ export async function getGuideOutline(topic: string, openaiApiKey: string): Prom
       Authorization: `Bearer ${openaiApiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'system',

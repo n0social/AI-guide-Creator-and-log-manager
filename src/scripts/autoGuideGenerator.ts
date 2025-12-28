@@ -5,7 +5,7 @@ const topics = [
   'How do I train a neural network for image classification?',
   'What is overfitting in machine learning and how can I prevent it?',
   'How do I write an effective prompt for a language model?',
-  'What are the best practices for prompt engineering with GPT-4?',
+  'What are the best practices for prompt engineering with GPT-4.1?',
   'How do I fine-tune a machine learning model for better accuracy?',
   'How can I use prompt engineering to get more creative AI outputs?',
 ];

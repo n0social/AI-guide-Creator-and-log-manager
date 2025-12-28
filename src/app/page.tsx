@@ -73,9 +73,6 @@ export default async function HomePage() {
             <h1 className="text-4xl font-bold tracking-tight text-secondary sm:text-6xl">
               <TypedMottoLiteral />
             </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Professional Prose, Programmatically Generated.
-            </p>
             <div className="mt-10 flex items-center justify-center gap-4 relative z-20">
               <Link href="/guides" className="btn-primary">
                 <BookOpen className="mr-2 h-4 w-4" />
